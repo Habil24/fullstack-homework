@@ -3,7 +3,7 @@ import { sortBy } from 'lodash'
 
 import CropSelect from './CropSelect'
 import { Crop, Field, SeasonalCrop } from './types'
-import { fetchCrops, fetchFields } from './api'
+import { fetchCrops, fetchFields, getNewHumusBalance} from './api'
 import buildNewFieldsState from './buildNewFieldsState'
 
 type Props = {}
@@ -52,7 +52,12 @@ export default class Table extends PureComponent<Props, State> {
 
       {sortBy(field.crops, crop => crop.year).map(seasonalCrop => this.renderCropCell(field, seasonalCrop))}
 
-      <div className="table__cell table__cell--right">--</div>
+      <div className="table__cell table__cell--right">
+        {
+          field.humus_balance || field.humus_balance === 0 ?
+          field.humus_balance : "--"
+        }
+      </div>
     </div>
 
   renderCropCell = (field: Field, seasonalCrop: SeasonalCrop) =>
@@ -60,12 +65,17 @@ export default class Table extends PureComponent<Props, State> {
       <CropSelect
         selectedCrop={seasonalCrop.crop}
         allCrops={this.state.allCrops}
-        onChange={newCrop => this.changeFieldCrop(newCrop, field.id, seasonalCrop.year)}
+        onChange={newCrop => this.changeFieldCrop(newCrop, seasonalCrop.crop, field.id, seasonalCrop.year)}
       />
     </div>
 
-  changeFieldCrop = (newCrop: Crop | null, fieldId: number, cropYear: number) =>
-    this.setState(
-      buildNewFieldsState(this.state.fields, newCrop, fieldId, cropYear),
-    )
+  changeFieldCrop = async (newCrop: Crop | null,selectedCrop: Crop | null,fieldId: number, cropYear: number) => {
+    if (newCrop?.value && selectedCrop?.value && newCrop.value !== selectedCrop?.value){
+      let humus_balance = await getNewHumusBalance(fieldId,newCrop?.value,cropYear)
+      this.setState(
+        buildNewFieldsState(this.state.fields, newCrop, fieldId, cropYear, humus_balance),
+      )
+    }
+  }
+
 }

@@ -21,4 +21,16 @@ class CropsService
   def fetch_all_crops
     CROPS
   end
+
+  # Assuming that value is unique
+  def crop_humus_delta_val(crop_val)
+    crop = CROPS.find { |crop| crop[:value] == crop_val }
+    return crop[:humus_delta]
+  end
+
+  def get_crop(crop_val)
+    crop = CROPS.find { |crop| crop[:value] == crop_val }
+    return crop
+  end
+
 end
