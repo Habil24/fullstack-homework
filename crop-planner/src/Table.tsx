@@ -6,7 +6,9 @@ import { Crop, Field, SeasonalCrop } from './types'
 import { fetchCrops, fetchFields, getNewHumusBalance} from './api'
 import buildNewFieldsState from './buildNewFieldsState'
 
-type Props = {}
+type Props = {
+  updateText: Function
+}
 
 type State = {
   allCrops: Array<Crop>,
@@ -65,15 +67,21 @@ export default class Table extends PureComponent<Props, State> {
       <CropSelect
         selectedCrop={seasonalCrop.crop}
         allCrops={this.state.allCrops}
-        onChange={newCrop => this.changeFieldCrop(newCrop, seasonalCrop.crop, field.id, seasonalCrop.year)}
+        onChange={newCrop => this.changeFieldCrop(newCrop, seasonalCrop.crop, field, seasonalCrop.year)}
       />
     </div>
 
-  changeFieldCrop = async (newCrop: Crop | null,selectedCrop: Crop | null,fieldId: number, cropYear: number) => {
-    if (newCrop?.value && selectedCrop?.value && newCrop.value !== selectedCrop?.value){
-      let humus_balance = await getNewHumusBalance(fieldId,newCrop?.value,cropYear)
+  changeFieldCrop = async (newCrop: Crop | null,selectedCrop: Crop | null,field: Field, cropYear: number) => {
+    if (newCrop?.value && field.humus_balance && selectedCrop?.value && newCrop.value !== selectedCrop?.value){
+      let humus_balance = await getNewHumusBalance(field.id,newCrop?.value,cropYear)
+      if(humus_balance < field.humus_balance){
+        this.props.updateText("Dear farmer the humus balance of field named " + field.name + " has been degraded!")
+      }else{
+        this.props.updateText("Dear farmer the humus balance of field named " + field.name + " has been improved!")
+      }
+    
       this.setState(
-        buildNewFieldsState(this.state.fields, newCrop, fieldId, cropYear, humus_balance),
+        buildNewFieldsState(this.state.fields, newCrop, field.id, cropYear, humus_balance),
       )
     }
   }
